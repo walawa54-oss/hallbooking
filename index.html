@@ -197,10 +197,10 @@
 </header>
 
 <nav>
-  <button data-tab="avail" class="active">📅 දින ලබා ගැනීම</button>
-  <button data-tab="new">🔒 ➕ නව වෙන්කිරීම</button>
-  <button data-tab="list">🔒 📋 වෙන්කිරීම්</button>
-  <button data-tab="settings">🔒 ⚙️ ලිපි සැකසුම් (Layout)</button>
+  <button type="button" data-tab="avail" class="active">📅 දින ලබා ගැනීම</button>
+  <button type="button" data-tab="new">🔒 ➕ නව වෙන්කිරීම</button>
+  <button type="button" data-tab="list">🔒 📋 වෙන්කිරීම්</button>
+  <button type="button" data-tab="settings">🔒 ⚙️ ලිපි සැකසුම් (Layout)</button>
 </nav>
 
 <main>
@@ -271,7 +271,7 @@
     <div id="condBox" hidden style="margin-top:6px;border-top:1px solid #eee;padding-top:12px">
       <h4 style="margin:0 0 8px">වෙන්කිරීමේ කොන්දේසි</h4>
       <div id="condList"></div>
-      <p class="hint">සියලු කොන්දේසි ✓ කළ පසු "තහවුරු කරන්න" මගින් ලිපිය බලා මුද්‍රණය කරන්න.</p>
+      <p class="hint">කොන්දේසි ✓ කර "තහවුරු කරන්න" ඔබන්න, නැත්නම් "👁 ලිපිය බලන්න" මගින් කෙලින්ම ලිපිය පරීක්ෂා කර මුද්‍රණය කරන්න.</p>
     </div>
 
     <div style="margin-top:16px;display:flex;gap:8px;flex-wrap:wrap">
@@ -287,7 +287,7 @@
   <div class="card">
     <div class="row" style="margin-bottom:12px">
       <h3 style="margin:0">වෙන්කිරීම් ලැයිස්තුව</h3>
-      <button class="ghost" id="exportBtn">⬇ උපස්ථ (JSON)</button>
+      <button class="ghost" type="button" id="exportBtn">⬇ උපස්ථ (JSON)</button>
     </div>
     <div id="listBox"></div>
   </div>
@@ -323,14 +323,14 @@
         <div class="full"><label>ලිපිය යොමු කරන තැනැත්තා</label><input id="setRecipientTitle"></div>
       </div>
 
-      <button class="primary" style="margin-top:20px; width:100%;" onclick="saveSettings()">💾 සැකසුම් සුරකින්න</button>
+      <button class="primary" type="button" style="margin-top:20px; width:100%;" onclick="saveSettings()">💾 සැකසුම් සුරකින්න</button>
 
       <h4 style="margin:20px 0 10px; color:#0b5c3f; border-top:1px solid #ddd; padding-top:15px;">🔐 පද්ධති මුරපදය (PIN) වෙනස් කරන්න</h4>
       <div class="grid">
         <div><label>අලුත් මුරපදය</label><input type="password" id="newPinInput" placeholder="අලුත් PIN එක"></div>
         <div><label>නැවත ඇතුළත් කරන්න</label><input type="password" id="confirmPinInput" placeholder="තහවුරු කරන්න"></div>
       </div>
-      <button class="ghost" style="margin-top:10px; width:100%; font-weight:600;" onclick="changeSystemPin()">🔑 මුරපදය සුරකින්න</button>
+      <button class="ghost" type="button" style="margin-top:10px; width:100%; font-weight:600;" onclick="changeSystemPin()">🔑 මුරපදය සුරකින්න</button>
     </div>
 
     <div class="live-preview-panel">
@@ -371,10 +371,10 @@
   <div class="box">
     <div class="bar">
       <div>
-        <button class="ghost" onclick="closePreview()">✕ වසන්න</button>
+        <button class="ghost" type="button" onclick="closePreview()">✕ වසන්න</button>
       </div>
       <div>
-        <button class="primary" onclick="doPrint()">🖨 මුද්‍රණය කරන්න (A4)</button>
+        <button class="primary" type="button" onclick="doPrint()">🖨 මුද්‍රණය කරන්න (A4)</button>
       </div>
     </div>
     <div class="content" id="previewContent"></div>
@@ -440,7 +440,10 @@ async function pullCloudState(silent = true){
 
     isSyncingFromCloud = true;
     if(Array.isArray(data.bookings)){
-      bookings = data.bookings;
+      bookings = data.bookings.map(item => ({
+        ...item,
+        conditions: item.conditions || {}
+      }));
       localStorage.setItem(KEY, JSON.stringify(bookings));
     }
     if(data.org){
@@ -457,9 +460,13 @@ async function pullCloudState(silent = true){
     }
     isSyncingFromCloud = false;
 
-    renderList();
-    renderStrip();
-    showAvail(document.getElementById('availDate').value || ymd(new Date()));
+    if(!document.getElementById('tab-list').hidden){
+      renderList();
+    }
+    if(!document.getElementById('tab-avail').hidden){
+      renderStrip();
+      showAvail(document.getElementById('availDate').value || ymd(new Date()));
+    }
     if(!document.getElementById('tab-settings').hidden){
       loadSettingsForm();
     }
@@ -594,7 +601,7 @@ if(!ORG.signerTitles || ORG.signerTitles.length < 3) ORG.signerTitles = DEFAULT_
 if(!ORG.layout) ORG.layout = DEFAULT_ORG.layout;
 
 const HALLS = {
-  mahaweli : { label:'මහවැලි ශ්‍රවණාගාරය', refPrefix:'/W/A', defaultOfficer: 'පී.වී.ජී. ලීලාරත්න' },
+  mahaweli : { label:'මහවැලි ශ්‍රවණාගාරය', refPrefix:'RPM/W/A', defaultOfficer: 'පී.වී.ජී. ලීලාරත්න' },
   rajaratna: { label:'ඩී. ඒ. රාජපක්ෂ ශාලාව', refPrefix:'RPM/W/D/AD', defaultOfficer: 'ඩී.එච්.ඥානපාල' }
 };
 
@@ -609,7 +616,10 @@ const MONTHS_SI = ['ජනවාරි','පෙබරවාරි','මාර්
 
 /* ================= STATE ================= */
 const KEY = 'hallBookings_v5';
-let bookings = JSON.parse(localStorage.getItem(KEY) || '[]');
+let bookings = JSON.parse(localStorage.getItem(KEY) || '[]').map(item => ({
+  ...item,
+  conditions: item.conditions || {}
+}));
 let editingId = null;
 let currentPreviewHTML = '';
 
@@ -640,6 +650,7 @@ function suggestRef(hall){
 
 function autoCheck(b){
   if(!b || b.status==='confirmed') return;
+  b.conditions = b.conditions || {};
   CONDITIONS.forEach(c=>{
     const auto = (c.key==='fee' && b.feeAmt && b.feeRec)
               || (c.key==='deposit' && b.depAmt && b.depRec)
@@ -653,14 +664,15 @@ function activateTab(tabName){
   if(tabName !== 'avail' && !requireAuth(tabName)) return;
   document.querySelectorAll('nav button').forEach(b=> b.classList.toggle('active', b.dataset.tab === tabName));
   document.querySelectorAll('main section').forEach(s=>s.hidden=true);
-  document.getElementById('tab-'+tabName).hidden=false;
+  const targetSec = document.getElementById('tab-'+tabName);
+  if(targetSec) targetSec.hidden=false;
   if(tabName==='list') renderList();
-  if(tabName==='avail') renderStrip();
+  if(tabName==='avail') { renderStrip(); showAvail(document.getElementById('availDate').value || ymd(new Date())); }
   if(tabName==='settings') loadSettingsForm();
 }
 
 document.querySelectorAll('nav button').forEach(btn=>{
-  btn.onclick = () => activateTab(btn.dataset.tab);
+  btn.addEventListener('click', () => activateTab(btn.dataset.tab));
 });
 
 /* ================= SETTINGS & LIVE PREVIEW LOGIC ================= */
@@ -767,6 +779,7 @@ form.addEventListener('submit', e=>{
 
   if(editingId){
     const b = bookings.find(x=>x.id===editingId);
+    if(!b) return;
     Object.assign(b, data);
     autoCheck(b);
     save();
@@ -798,7 +811,6 @@ function resetForm(){
 document.getElementById('cancelEdit').onclick = resetForm;
 
 /* ================= CONDITIONS ================= */
-/* ================= CONDITIONS & PRINT ================= */
 function renderCond(){
   const b = bookings.find(x=>x.id===editingId);
   const box = document.getElementById('condBox');
@@ -808,7 +820,7 @@ function renderCond(){
   b.conditions = b.conditions || {};
   box.hidden = false;
   autoCheck(b);
-  save();
+  localStorage.setItem(KEY, JSON.stringify(bookings));
 
   list.innerHTML = CONDITIONS.map(c=>`
     <label class="cond">
@@ -833,7 +845,6 @@ function updateConfirmBtn(){
   const rp  = document.getElementById('reprintBtn');
   if(!b){ btn.hidden=true; rp.hidden=true; return; }
 
-  // කෙටුම්පතක් වුවත් ලිපිය බලා Print කිරීමට "👁 ලිපිය බලන්න" හැමවිටම පෙන්වයි
   rp.hidden = false;
 
   if(b.status==='confirmed'){
@@ -844,15 +855,15 @@ function updateConfirmBtn(){
     btn.textContent = '✔ තහවුරු කරන්න';
   }
 }
+
 document.getElementById('confirmBtn').onclick = ()=>{
   if(!requireAuth('new')) return;
   const b = bookings.find(x=>x.id===editingId);
   if(!b) return;
-  const missing = CONDITIONS.filter(c=>!b.conditions[c.key]);
-  if(missing.length){ alert('මුලින්ම සම්පූර්ණ කරන්න:\n• ' + missing.map(c=>c.label).join('\n• ')); return; }
   b.status = 'confirmed';
   b.confirmedAt = new Date().toISOString();
-  save(); renderCond(); renderList();
+  save();
+  renderCond();
   showPreview(b.id);
 };
 
@@ -875,9 +886,9 @@ function renderList(){
         <span class="hint">${b.eventName}</span>
       </div>
       <div style="margin-top:10px;display:flex;gap:6px;flex-wrap:wrap">
-        <button class="ghost" onclick="editBooking('${b.id}')">✏️ සංස්කරණය</button>
-        <button class="ghost" onclick="showPreview('${b.id}')">👁 ලිපිය බලන්න</button>
-        <button class="ghost" onclick="delBooking('${b.id}')">🗑 මකන්න</button>
+        <button class="ghost" type="button" onclick="editBooking('${b.id}')">✏️ සංස්කරණය</button>
+        <button class="ghost" type="button" onclick="showPreview('${b.id}')">👁 ලිපිය බලන්න</button>
+        <button class="ghost" type="button" onclick="delBooking('${b.id}')">🗑 මකන්න</button>
       </div>
     </div>`).join('');
 }
@@ -900,7 +911,8 @@ function delBooking(id){
   if(!requireAuth('list')) return;
   if(!confirm('මෙම වෙන්කිරීම මකා දැමීමට අවශ්‍යද?')) return;
   bookings = bookings.filter(b=>b.id!==id);
-  save(); renderList();
+  save();
+  renderList();
 }
 
 /* ================= AVAILABILITY (PUBLIC) ================= */
@@ -1026,11 +1038,9 @@ function buildLetter(b){
 
 /* ================= PREVIEW + PRINT ================= */
 function showPreview(id){
- if(b.status!=='confirmed'){ alert('තහවුරු කළ වෙන්කිරීමක් පමණක්.'); return; }
   if(!requireAuth('list')) return;
   const b = bookings.find(x=>x.id===id);
   if(!b){ alert('වෙන්කිරීමක් හමු නොවුණි.'); return; }
-  if(b.status!=='confirmed'){ alert('තහවුරු කළ වෙන්කිරීමක් පමණක්.'); return; }
 
   currentPreviewHTML = buildLetter(b);
   document.getElementById('previewContent').innerHTML = currentPreviewHTML;
