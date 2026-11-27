@@ -645,7 +645,7 @@ function suggestRef(hall){
   const prefix = HALLS[hall].refPrefix;
   const nums = bookings.filter(b=>b.hall===hall && b.refNo && b.refNo.startsWith(prefix))
     .map(b=>{ const m=b.refNo.match(/(\d+)(?:-|$)/); return m?+m[1]:0; });
-  return `${prefix}/${String((nums.length?Math.max(...nums):0)+1).padStart(3,'0')}`;
+  return HALLS[hall].refPrefix;
 }
 
 function autoCheck(b){
