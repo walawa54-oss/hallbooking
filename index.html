@@ -798,13 +798,17 @@ function resetForm(){
 document.getElementById('cancelEdit').onclick = resetForm;
 
 /* ================= CONDITIONS ================= */
+/* ================= CONDITIONS & PRINT ================= */
 function renderCond(){
   const b = bookings.find(x=>x.id===editingId);
   const box = document.getElementById('condBox');
   const list = document.getElementById('condList');
   if(!b){ box.hidden = true; return; }
+
+  b.conditions = b.conditions || {};
   box.hidden = false;
-  autoCheck(b); save();
+  autoCheck(b);
+  save();
 
   list.innerHTML = CONDITIONS.map(c=>`
     <label class="cond">
@@ -815,7 +819,9 @@ function renderCond(){
   list.querySelectorAll('input[type=checkbox]').forEach(cb=>{
     cb.onchange = () => {
       if(!requireAuth('new')){ cb.checked = !cb.checked; return; }
-      b.conditions[cb.dataset.key] = cb.checked; save(); updateConfirmBtn();
+      b.conditions[cb.dataset.key] = cb.checked;
+      save();
+      updateConfirmBtn();
     };
   });
   updateConfirmBtn();
@@ -827,16 +833,17 @@ function updateConfirmBtn(){
   const rp  = document.getElementById('reprintBtn');
   if(!b){ btn.hidden=true; rp.hidden=true; return; }
 
+  // කෙටුම්පතක් වුවත් ලිපිය බලා Print කිරීමට "👁 ලිපිය බලන්න" හැමවිටම පෙන්වයි
+  rp.hidden = false;
+
   if(b.status==='confirmed'){
-    btn.hidden=true; rp.hidden=false;
+    btn.hidden = true;
   }else{
-    const all = CONDITIONS.every(c => b.conditions[c.key]);
-    btn.hidden=false; rp.hidden=true;
-    btn.disabled = !all;
-    btn.textContent = all ? '✔ තහවුරු කරන්න' : '✔ තහවුරු කරන්න (කොන්දේසි ඉතිරියි)';
+    btn.hidden = false;
+    btn.disabled = false;
+    btn.textContent = '✔ තහවුරු කරන්න';
   }
 }
-
 document.getElementById('confirmBtn').onclick = ()=>{
   if(!requireAuth('new')) return;
   const b = bookings.find(x=>x.id===editingId);
@@ -869,7 +876,7 @@ function renderList(){
       </div>
       <div style="margin-top:10px;display:flex;gap:6px;flex-wrap:wrap">
         <button class="ghost" onclick="editBooking('${b.id}')">✏️ සංස්කරණය</button>
-        ${b.status==='confirmed'?`<button class="ghost" onclick="showPreview('${b.id}')">👁 ලිපිය බලන්න</button>`:''}
+        <button class="ghost" onclick="showPreview('${b.id}')">👁 ලිපිය බලන්න</button>
         <button class="ghost" onclick="delBooking('${b.id}')">🗑 මකන්න</button>
       </div>
     </div>`).join('');
@@ -1019,6 +1026,7 @@ function buildLetter(b){
 
 /* ================= PREVIEW + PRINT ================= */
 function showPreview(id){
+ if(b.status!=='confirmed'){ alert('තහවුරු කළ වෙන්කිරීමක් පමණක්.'); return; }
   if(!requireAuth('list')) return;
   const b = bookings.find(x=>x.id===id);
   if(!b){ alert('වෙන්කිරීමක් හමු නොවුණි.'); return; }
