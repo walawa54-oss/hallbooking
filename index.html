@@ -1,0 +1,975 @@
+<!DOCTYPE html>
+<html lang="si">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ශාලා වෙන්කිරීම් පද්ධතිය</title>
+<style>
+  *{box-sizing:border-box}
+  body{font-family:'Iskoola Pota','Noto Sans Sinhala','Nirmala UI',sans-serif;margin:0;background:#eef1f4;color:#222}
+  header{background:#0b5c3f;color:#fff;padding:12px 20px;display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}
+  header h1{margin:0;font-size:17px}
+  .auth-status{display:flex;align-items:center;gap:8px;font-size:13px}
+  .auth-btn{background:rgba(255,255,255,.16);color:#fff;border:1px solid rgba(255,255,255,.35);padding:5px 12px;border-radius:5px;cursor:pointer;font-family:inherit;font-size:12px}
+  .auth-btn:hover{background:rgba(255,255,255,.26)}
+  nav{display:flex;gap:4px;background:#fff;padding:8px 20px;border-bottom:1px solid #ddd;flex-wrap:wrap}
+  nav button{padding:8px 16px;border:none;background:transparent;cursor:pointer;font-size:14px;border-radius:6px;font-family:inherit}
+  nav button.active{background:#0b5c3f;color:#fff}
+  main{padding:20px;max-width:1400px;margin:auto}
+  .card{background:#fff;border-radius:8px;padding:18px;margin-bottom:16px;box-shadow:0 1px 3px rgba(0,0,0,.08)}
+  h3{margin-top:0}
+  .grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+  .grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px}
+  .grid4{display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:12px}
+  label{display:block;font-size:13px;font-weight:600;margin-bottom:4px;color:#444}
+  input,select,textarea{width:100%;padding:8px;border:1px solid #ccc;border-radius:5px;font-family:inherit;font-size:14px}
+  fieldset{border:1px solid #e0e0e0;border-radius:8px;padding:12px;margin:0 0 12px}
+  legend{font-weight:600;color:#0b5c3f;padding:0 6px;font-size:14px}
+  .full{grid-column:1/-1}
+  button.primary{background:#0b5c3f;color:#fff;border:none;padding:10px 22px;border-radius:6px;cursor:pointer;font-size:15px;font-family:inherit}
+  button.primary:disabled{background:#aaa;cursor:not-allowed}
+  button.ghost{background:#eee;border:1px solid #ccc;padding:8px 14px;border-radius:5px;cursor:pointer;font-family:inherit;font-size:14px}
+  .booking{border:1px solid #ddd;border-radius:8px;padding:12px;margin-bottom:10px}
+  .booking.pending{border:2px dashed #999;background:repeating-linear-gradient(45deg,#fafafa,#fafafa 10px,#f4f4f4 10px,#f4f4f4 20px)}
+  .booking.pending .title::before{content:'✏️ '}
+  .booking.confirmed{border-left:5px solid #0b5c3f}
+  .badge{font-size:12px;padding:2px 9px;border-radius:10px;font-weight:600}
+  .badge.pending{background:#ffe9a8;color:#8a6d00}
+  .badge.confirmed{background:#c8f0d8;color:#0b5c3f}
+  .row{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap}
+  .cond{display:flex;align-items:center;gap:8px;margin:6px 0;font-size:14px;padding:6px 10px;border-radius:5px;background:#f7f9fb}
+  .cond input{width:auto;transform:scale(1.2)}
+  .strip{display:flex;gap:6px;overflow-x:auto;padding-bottom:6px}
+  .day{min-width:64px;border:1px solid #ddd;border-radius:8px;padding:6px;text-align:center;font-size:12px;cursor:pointer;background:#fff}
+  .day:hover{border-color:#0b5c3f}
+  .day .num{font-weight:700;font-size:15px}
+  .dots{display:flex;gap:3px;justify-content:center;margin-top:4px}
+  .dot{width:16px;height:16px;border-radius:3px;font-size:9px;line-height:16px;color:#fff;font-weight:600}
+  .dot.free{background:#3fa66b}.dot.busy{background:#c0392b}.dot.pend{background:#e0a800}
+  .hint{font-size:12px;color:#777}
+
+  /* Login Modal */
+  #loginModal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.65);z-index:2000;align-items:center;justify-content:center;padding:16px}
+  #loginModal.open{display:flex}
+  #loginModal .login-box{background:#fff;max-width:380px;width:100%;border-radius:10px;padding:22px;box-shadow:0 10px 30px rgba(0,0,0,.35)}
+  #loginModal h3{margin:0 0 6px;color:#0b5c3f}
+  #loginModal .err{color:#c0392b;font-size:13px;margin-top:6px;min-height:18px}
+
+  /* ====== SETTINGS LAYOUT ====== */
+  .settings-grid { display: grid; grid-template-columns: 400px 1fr; gap: 20px; align-items: start; }
+  @media (max-width: 1000px) { .settings-grid { grid-template-columns: 1fr; } }
+  
+  .settings-panel { background: #f8f9fa; padding: 15px; border-radius: 8px; border: 1px solid #e0e0e0; position: sticky; top: 20px;}
+  
+  .live-preview-panel { 
+    background: #475569; 
+    padding: 20px; 
+    border-radius: 8px; 
+    overflow: auto; 
+    max-height: 85vh; 
+    border: 1px solid #334155; 
+    display: flex; 
+    justify-content: center;
+    align-items: flex-start;
+  }
+  
+  .live-preview-container-wrapper {
+    width: 100%;
+    max-width: 600px;
+    aspect-ratio: 210 / 297;
+    position: relative;
+    overflow: hidden;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.5); 
+  }
+
+  .live-preview-scaler {
+    width: 210mm;
+    min-height: 297mm;
+    position: absolute;
+    top: 0; left: 0;
+    transform-origin: top left;
+    background: #fff;
+  }
+
+  /* Preview Modal */
+  #previewModal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:1000;overflow:auto;padding:20px}
+  #previewModal .box{background:#fff;max-width:850px;margin:auto;border-radius:8px;box-shadow:0 4px 20px rgba(0,0,0,.3)}
+  #previewModal .bar{display:flex;justify-content:space-between;padding:12px 18px;border-bottom:1px solid #ddd;position:sticky;top:0;background:#fff;border-radius:8px 8px 0 0;gap:8px;flex-wrap:wrap}
+  #previewModal .content{padding:0; position:relative; display: flex; justify-content: center; background: #525659; min-height: 100vh;}
+  #previewModal .tip{font-size:12px;color:#666;margin:6px 0 0}
+
+  /* ====== PRINT CSS ====== */
+  #printArea{display:none}
+  @media print{
+    body > *:not(#printArea) { display: none !important; }
+    #printArea { display: block !important; }
+    
+    @page { 
+      size: A4; 
+      margin: 0; 
+    }
+    body { background: #fff; margin: 0; padding: 0; }
+  }
+
+  /* ============ LETTER ============ */
+  .letter{
+    font-family:'Iskoola Pota','Noto Sans Sinhala','Times New Roman',serif;
+    line-height:1.6;color:#000; 
+    position: relative;
+    width: 210mm;
+    min-height: 297mm; 
+    background-color: #fff;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .org-head-wrap { 
+    width: 100%; 
+    padding: 15mm 15mm 0 15mm; 
+  }
+  .org-head-img { 
+    width: 100%; 
+    height: auto; 
+    display: block; 
+    margin-bottom: 5mm; 
+  }
+  
+  .letter-body {
+    flex: 1;
+  }
+
+  .letter-top{display:flex;flex-direction:column;margin-bottom:14px}
+  .letter-top .tl{line-height:1.5}
+  .letter-top .recipient{margin-top:10px}
+
+  .title{
+    text-align: left; 
+    font-weight: 700; 
+    margin: 20px 0 15px; 
+    border-bottom: 1.5px solid #000; 
+    padding-bottom: 3px;
+    display: inline-block;
+  }
+
+  .letter p{margin:8px 0;text-align:justify}
+  .bullets>div{margin:4px 0}
+  
+  .receipt-row { display: flex; align-items: flex-start; }
+  .receipt-row .rlabel { white-space: nowrap; margin-right: 5px; }
+  .receipt-row .rvalues > div { margin-bottom: 2px; }
+
+  .sign{
+    text-align:left;
+    margin-top:40px;
+    padding-left:20px;
+    line-height:1.5;
+  }
+  .sign .sign-dots {
+    border-top: 1.5px dotted #000;
+    width: 180px; 
+    margin-bottom: 5px;
+  }
+  .sign .sign-name{font-weight:600}
+  .sign .sign-indent { padding-left: 0px; }
+
+  .forward{display:flex; justify-content:flex-start; align-items:flex-start; margin-top:40px; padding-left:20px; gap:150px;}
+  .forward .fw-left{display:block}
+  .forward .fw-text>div{line-height:1.5}
+  .forward .fw-right{padding-top:2px}
+
+  .fw-item { display: flex; align-items: flex-start; gap: 6px; }
+  .fw-item::before { content: '●'; font-size: 10px; margin-top: 6px; }
+  .fw-indent { padding-left: 16px; }
+
+  @media(max-width:800px){.grid,.grid3,.grid4{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+
+<header>
+  <h1>ශාලා වෙන්කිරීම් පද්ධතිය — Mahaweli Authority (Walawa)</h1>
+  <div class="auth-status">
+    <span id="authBadge">🔓 මහජන දසුන (දින පමණි)</span>
+    <button class="auth-btn" id="authActionBtn" type="button" onclick="handleAuthButton()">🔑 මුරපදයෙන් ඇතුළු වන්න</button>
+  </div>
+</header>
+
+<nav>
+  <button data-tab="avail" class="active">📅 දින ලබා ගැනීම</button>
+  <button data-tab="new">🔒 ➕ නව වෙන්කිරීම</button>
+  <button data-tab="list">🔒 📋 වෙන්කිරීම්</button>
+  <button data-tab="settings">🔒 ⚙️ ලිපි සැකසුම් (Layout)</button>
+</nav>
+
+<main>
+<section id="tab-avail">
+  <div class="card">
+    <h3>ඉදිරි දින 14</h3>
+    <div class="strip" id="strip"></div>
+    <p class="hint">🟩 නිදහස් · 🟨 කෙටුම්පත · 🟥 තහවුරු &nbsp;(R = රාජපක්ෂ, M = මහවැලි)</p>
+  </div>
+  <div class="card">
+    <label>දිනයක් තෝරන්න</label>
+    <input type="date" id="availDate">
+    <div id="availResult" style="margin-top:14px"></div>
+  </div>
+</section>
+
+<section id="tab-new" hidden>
+  <form id="bookingForm" class="card">
+    <h3 id="formTitle">නව වෙන්කිරීමක්</h3>
+
+    <fieldset>
+      <legend>ශාලාව සහ දිනය</legend>
+      <div class="grid3">
+        <div><label>ශාලාව *</label>
+          <select name="hall" required>
+            <option value="mahaweli">මහවැලි ශ්‍රවණාගාරය</option>
+            <option value="rajaratna">ඩී. ඒ. රාජපක්ෂ ශාලාව</option>
+          </select></div>
+        <div><label>දිනය *</label><input type="date" name="date" required></div>
+        <div><label>මාගේ අංකය</label><input name="refNo"></div>
+        <div><label>ආරම්භය *</label><input type="time" name="from" required></div>
+        <div><label>අවසානය *</label><input type="time" name="to" required></div>
+      </div>
+    </fieldset>
+
+    <fieldset>
+      <legend>අයදුම්කරු සහ වැඩසටහන</legend>
+      <div class="grid">
+        <div><label>වෙන්කරන ලද අයගේ නම *</label><input name="name" required placeholder="උදා: ඒ.ජී.රුවිනි ඔනිතා පෙබෝධනි මිය."></div>
+        <div><label>දුරකථන අංකය *</label><input name="phone" required placeholder="07XXXXXXXX"></div>
+        <div class="full"><label>ලිපිනය (අවශ්‍ය නම්)</label><input name="address"></div>
+        <div class="full"><label>වැඩසටහන *</label><input name="eventName" required placeholder="උදා: කුස්තියානි අගමික වැඩසටහනක් සඳහා"></div>
+      </div>
+    </fieldset>
+
+    <fieldset>
+      <legend>මුදල් තැන්පතු (රිසිටිපත්)</legend>
+      <div class="grid3">
+        <div><label>ශාලා ගාස්තුව (රු.)</label><input name="feeAmt" inputmode="numeric" placeholder="4500"></div>
+        <div><label>රිසිටිපත් අංකය</label><input name="feeRec" placeholder="167642"></div>
+        <div></div>
+        <div><label>ඇප මුදල (රු.)</label><input name="depAmt" inputmode="numeric" placeholder="5000"></div>
+        <div><label>රිසිටිපත් අංකය</label><input name="depRec" placeholder="167642"></div>
+        <div></div>
+        <div><label>සේවක දීමනාව (රු.)</label><input name="staffAmt" inputmode="numeric" placeholder="10000"></div>
+        <div><label>රිසිටිපත් අංකය</label><input name="staffRec" placeholder="167642"></div>
+      </div>
+    </fieldset>
+
+    <fieldset>
+      <legend>යොමු කිරීම සහ සටහන්</legend>
+      <div class="grid">
+        <div><label>බලප්‍රදේශ භාර නිලධාරී (Auto)</label><input name="officerName" placeholder="මෙය ශාලාවට අනුව ස්වයංක්‍රීයව වෙනස් වේ"></div>
+        <div><label>විශේෂ සටහන්</label><input name="notes"></div>
+      </div>
+    </fieldset>
+
+    <div id="condBox" hidden style="margin-top:6px;border-top:1px solid #eee;padding-top:12px">
+      <h4 style="margin:0 0 8px">වෙන්කිරීමේ කොන්දේසි</h4>
+      <div id="condList"></div>
+      <p class="hint">සියලු කොන්දේසි ✓ කළ පසු "තහවුරු කරන්න" මගින් ලිපිය බලා මුද්‍රණය කරන්න.</p>
+    </div>
+
+    <div style="margin-top:16px;display:flex;gap:8px;flex-wrap:wrap">
+      <button class="primary" type="submit">💾 සුරකින්න</button>
+      <button class="ghost" type="button" id="confirmBtn" hidden>✔ තහවුරු කරන්න</button>
+      <button class="ghost" type="button" id="reprintBtn" hidden>👁 ලිපිය බලන්න</button>
+      <button class="ghost" type="button" id="cancelEdit" hidden>අවලංගු</button>
+    </div>
+  </form>
+</section>
+
+<section id="tab-list" hidden>
+  <div class="card">
+    <div class="row" style="margin-bottom:12px">
+      <h3 style="margin:0">වෙන්කිරීම් ලැයිස්තුව</h3>
+      <button class="ghost" id="exportBtn">⬇ උපස්ථ (JSON)</button>
+    </div>
+    <div id="listBox"></div>
+  </div>
+</section>
+
+<!-- ⚙️ සජීවී පෙරදසුන සහ මුරපද සැකසුම් සහිත ලිපි සැකසුම් ටැබ් එක -->
+<section id="tab-settings" hidden>
+  <div class="settings-grid">
+    
+    <!-- වම් පස: සැකසුම් පැනලය -->
+    <div class="settings-panel">
+      <h3>ලිපි සැකසුම් (Layout)</h3>
+      <p class="hint" style="margin-bottom:16px;">ලිපි ශීර්ෂය අප්ලෝඩ් කර, පහත අගයන් මගින් ලියුමේ පිහිටීම පාලනය කරන්න.</p>
+      
+      <div class="full" style="margin-bottom:15px;">
+        <label>ලිපි ශීර්ෂ පසුතලය (Letterhead PNG/JPG)</label>
+        <input type="file" id="headImgInput" accept="image/*">
+        <button class="ghost" type="button" onclick="removeHeaderImage()" style="margin-top:6px;">පින්තූරය ඉවත් කරන්න</button>
+      </div>
+
+      <h4 style="margin:0 0 10px; color:#0b5c3f; border-top:1px solid #ddd; padding-top:15px;">ලියුමේ අකුරු පිහිටීම</h4>
+      <div class="grid3" style="margin-bottom:15px;">
+        <div>
+          <label>උඩින් ඉඩ (Top mm)</label>
+          <input type="number" id="setTopMargin" value="50" step="5" class="live-input">
+        </div>
+        <div><label>අකුරු ප්‍රමාණය (px)</label><input type="number" id="setFontSize" value="14" step="1" class="live-input"></div>
+        <div><label>වමින් ඉඩ (Left mm)</label><input type="number" id="setLeftMargin" value="20" step="5" class="live-input"></div>
+      </div>
+
+      <h4 style="margin:0 0 10px; color:#0b5c3f; border-top:1px solid #ddd; padding-top:15px;">අත්සන් සහ යොමු කිරීම්</h4>
+      <div class="grid">
+        <div><label>අත්සන් කරන නිලධාරියාගේ නම</label><input id="setSignerName"></div>
+        <div><label>අත්සන් කරන තනතුරු (කොමාවකින්)</label><input id="setSignerTitles"></div>
+        <div class="full"><label>ලිපිය යොමු කරන තැනැත්තා</label><input id="setRecipientTitle"></div>
+      </div>
+
+      <button class="primary" style="margin-top:20px; width:100%;" onclick="saveSettings()">💾 සැකසුම් සුරකින්න</button>
+
+      <!-- 🔑 මුරපදය මාරු කිරීමේ කොටස -->
+      <h4 style="margin:20px 0 10px; color:#0b5c3f; border-top:1px solid #ddd; padding-top:15px;">🔐 පද්ධති මුරපදය (PIN) වෙනස් කරන්න</h4>
+      <div class="grid">
+        <div><label>අලුත් මුරපදය</label><input type="password" id="newPinInput" placeholder="අලුත් PIN එක"></div>
+        <div><label>නැවත ඇතුළත් කරන්න</label><input type="password" id="confirmPinInput" placeholder="තහවුරු කරන්න"></div>
+      </div>
+      <button class="ghost" style="margin-top:10px; width:100%; font-weight:600;" onclick="changeSystemPin()">🔑 මුරපදය සුරකින්න</button>
+    </div>
+
+    <!-- දකුණු පස: සජීවී පෙරදසුන -->
+    <div class="live-preview-panel">
+      <div style="width:100%; max-width: 600px;">
+        <h4 style="margin:0 0 15px; text-align:center; color:#fff; text-shadow: 1px 1px 2px #000;">සජීවී පෙරදසුන (A4 Preview)</h4>
+        
+        <div style="display:flex; justify-content:center;">
+          <div class="live-preview-container-wrapper" id="livePreviewWrapper">
+            <div class="live-preview-scaler" id="livePreviewContent">
+              <!-- buildLetter function එකෙන් මේක පිරෙනවා -->
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+  </div>
+</section>
+</main>
+
+<!-- Login Modal -->
+<div id="loginModal" role="dialog" aria-modal="true" aria-labelledby="loginTitle">
+  <div class="login-box">
+    <h3 id="loginTitle">🔑 පද්ධතියට ඇතුළු වීම</h3>
+    <p class="hint" style="margin:0 0 14px">දත්ත ඇතුළත් කිරීම, වෙන්කිරීම් බැලීම සහ සැකසුම් වෙනස් කිරීම සඳහා මුරපදය ඇතුළත් කරන්න.</p>
+    <form id="loginForm">
+      <label for="pinInput">මුරපදය (PIN)</label>
+      <input type="password" id="pinInput" autocomplete="current-password" placeholder="මුරපදය ඇතුළත් කරන්න" required>
+      <div class="err" id="loginErr"></div>
+      <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:12px">
+        <button class="ghost" type="button" onclick="closeLoginModal()">අවලංගු</button>
+        <button class="primary" type="submit">ඇතුළු වන්න</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<div id="previewModal">
+  <div class="box">
+    <div class="bar">
+      <div>
+        <button class="ghost" onclick="closePreview()">✕ වසන්න</button>
+      </div>
+      <div>
+        <button class="primary" onclick="doPrint()">🖨 මුද්‍රණය කරන්න (A4)</button>
+      </div>
+    </div>
+    <div class="content" id="previewContent"></div>
+    <div class="tip" style="padding:0 18px 14px;color:#666;font-size:12px; background:#fff;">
+      💡 <b>වැදගත්:</b> මුද්‍රණය කරන විට එන Browser Print Window එකේ <b>"More settings"</b> යටතේ ඇති <b>"Headers and footers"</b> කියන කොටුව අයින් කරන්න.
+    </div>
+  </div>
+</div>
+
+<div id="printArea"></div>
+
+<script>
+/* ================= AUTH CONFIG ================= */
+const PIN_STORAGE_KEY = 'hallSystemPin_v1';
+const DEFAULT_PIN = '1234';
+
+function getStoredPin(){
+  return localStorage.getItem(PIN_STORAGE_KEY) || DEFAULT_PIN;
+}
+
+const AUTH_SESSION_KEY = 'hallSystemAuth_v1';
+let isAuthenticated = sessionStorage.getItem(AUTH_SESSION_KEY) === '1';
+let pendingTab = null;
+
+function requireAuth(targetTab){
+  if(isAuthenticated) return true;
+  pendingTab = targetTab || null;
+  openLoginModal();
+  return false;
+}
+
+function openLoginModal(){
+  document.getElementById('loginErr').textContent = '';
+  const inp = document.getElementById('pinInput');
+  inp.value = '';
+  document.getElementById('loginModal').classList.add('open');
+  setTimeout(()=> inp.focus(), 50);
+}
+
+function closeLoginModal(){
+  pendingTab = null;
+  document.getElementById('loginModal').classList.remove('open');
+}
+
+function handleAuthButton(){
+  if(isAuthenticated){
+    isAuthenticated = false;
+    sessionStorage.removeItem(AUTH_SESSION_KEY);
+    updateAuthUI();
+    activateTab('avail');
+  }else{
+    openLoginModal();
+  }
+}
+
+document.getElementById('loginForm').addEventListener('submit', e=>{
+  e.preventDefault();
+  const pin = document.getElementById('pinInput').value;
+  if(pin === getStoredPin()){
+    isAuthenticated = true;
+    sessionStorage.setItem(AUTH_SESSION_KEY, '1');
+    const nextTab = pendingTab;
+    pendingTab = null;
+    document.getElementById('loginModal').classList.remove('open');
+    updateAuthUI();
+    if(nextTab) activateTab(nextTab);
+  }else{
+    document.getElementById('loginErr').textContent = '❌ වැරදි මුරපදයකි. නැවත උත්සාහ කරන්න.';
+  }
+});
+
+function changeSystemPin(){
+  if(!requireAuth('settings')) return;
+  const newPin = document.getElementById('newPinInput').value.trim();
+  const confirmPin = document.getElementById('confirmPinInput').value.trim();
+
+  if(!newPin){
+    alert('කරුණාකර නව මුරපදයක් ඇතුළත් කරන්න.');
+    return;
+  }
+  if(newPin !== confirmPin){
+    alert('ඇතුළත් කළ මුරපද දෙක එකිනෙකට නොගැලපේ!');
+    return;
+  }
+
+  localStorage.setItem(PIN_STORAGE_KEY, newPin);
+  document.getElementById('newPinInput').value = '';
+  document.getElementById('confirmPinInput').value = '';
+  alert('✅ මුරපදය සාර්ථකව වෙනස් කරන ලදී.');
+}
+
+function updateAuthUI(){
+  const badge = document.getElementById('authBadge');
+  const btn = document.getElementById('authActionBtn');
+  document.querySelectorAll('nav button').forEach(b=>{
+    const tab = b.dataset.tab;
+    if(tab === 'avail'){
+      b.textContent = '📅 දින ලබා ගැනීම';
+    }else if(tab === 'new'){
+      b.textContent = (isAuthenticated ? '' : '🔒 ') + '➕ නව වෙන්කිරීම';
+    }else if(tab === 'list'){
+      b.textContent = (isAuthenticated ? '' : '🔒 ') + '📋 වෙන්කිරීම්';
+    }else if(tab === 'settings'){
+      b.textContent = (isAuthenticated ? '' : '🔒 ') + '⚙️ ලිපි සැකසුම් (Layout)';
+    }
+  });
+  if(isAuthenticated){
+    badge.textContent = '🔐 පරිපාලක ප්‍රවේශය (Unlocked)';
+    btn.textContent = '🚪 Logout';
+  }else{
+    badge.textContent = '🔓 මහජන දසුන (දින පමණි)';
+    btn.textContent = '🔑 මුරපදයෙන් ඇතුළු වන්න';
+  }
+}
+
+/* ================= DEFAULT CONFIG ================= */
+const DEFAULT_ORG = {
+  division: 'Administrative Division',
+  authority: 'Mahaweli Authority of Sri Lanka',
+  area: 'Walawa Special Area.',
+  phones: '047-2230208, 047-3489129',
+  recipientTitle: 'නියෝජ්‍ය නේවාසික ව්‍යාපාර කළමණාකාර (ඉංජිනේරු), වලව.',
+  signerName: 'චාන්දනී එස්. කොඩිකාරගේ',
+  signerTitles: ['නියෝජ්‍ය නේවාසික ව්‍යාපාර කළමනාකාර (පාලන)', 'නේවාසික ව්‍යාපාර කළමණාකාර (වලව) වෙනුවට', 'වලව විශේෂ බල ප්‍රදේශය.'],
+  headerImg: '',
+  layout: { topMargin: 50, fontSize: 14, leftMargin: 20 }
+};
+
+let ORG = JSON.parse(localStorage.getItem('orgSettings')) || DEFAULT_ORG;
+if(!ORG.signerTitles || ORG.signerTitles.length < 3) ORG.signerTitles = DEFAULT_ORG.signerTitles;
+if(!ORG.layout) ORG.layout = DEFAULT_ORG.layout;
+
+const HALLS = {
+  mahaweli : { label:'මහවැලි ශ්‍රවණාගාරය', refPrefix:'RPM/W/A', defaultOfficer: 'පී.වී.ජී. ලීලාරත්න' },
+  rajaratna: { label:'ඩී. ඒ. රාජපක්ෂ ශාලාව', refPrefix:'RPM/W/D/AD', defaultOfficer: 'ඩී.එච්.ඥානපාල' }
+};
+
+const CONDITIONS = [
+  {key:'fee',      label:'ශාලා ගාස්තුව ගෙවා ඇත'},
+  {key:'deposit',  label:'ඇප මුදල ගෙවා ඇත'},
+  {key:'staff',    label:'සේවක දීමනාව ගෙවා ඇත'},
+  {key:'approval', label:'භාරකාර අනුමැතිය ලැබී ඇත'}
+];
+
+const MONTHS_SI = ['ජනවාරි','පෙබරවාරි','මාර්තු','අප්‍රේල්','මැයි','ජූනි','ජූලි','අගෝස්තු','සැප්තැම්බර්','ඔක්තෝබර්','නොවැම්බර්','දෙසැම්බර්'];
+
+/* ================= STATE ================= */
+const KEY = 'hallBookings_v5';
+let bookings = JSON.parse(localStorage.getItem(KEY) || '[]');
+let editingId = null;
+let currentPreviewHTML = '';
+
+const save = () => localStorage.setItem(KEY, JSON.stringify(bookings));
+const uid  = () => Date.now().toString(36) + Math.random().toString(36).slice(2,6);
+const ymd  = d => d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+const fmtDateDot  = s => s ? s.replace(/-/g,'.') : '';
+const fmtDateLong = s => { if(!s) return ''; const [y,m,d]=s.split('-'); return `${y} ${MONTHS_SI[+m-1]} ${+d}`; };
+const fmtDateMasa = s => { if(!s) return ''; const [y,m,d]=s.split('-'); return `${y} ${MONTHS_SI[+m-1]} මස ${+d} වන දින`; };
+
+function fmtTime12(t){
+  if(!t) return '';
+  const [h,m] = t.split(':').map(Number);
+  const suf = h < 12 ? 'පෙ.ව.' : 'ප.ව.';
+  let hh = h % 12; if(hh===0) hh=12;
+  return `${suf}${String(hh).padStart(2,'0')}.${String(m).padStart(2,'0')}`;
+}
+
+function suggestRef(hall){
+  const prefix = HALLS[hall].refPrefix;
+  const nums = bookings.filter(b=>b.hall===hall && b.refNo && b.refNo.startsWith(prefix))
+    .map(b=>{ const m=b.refNo.match(/(\d+)(?:-|$)/); return m?+m[1]:0; });
+  return `${prefix}/${String((nums.length?Math.max(...nums):0)+1).padStart(3,'0')}`;
+}
+
+function autoCheck(b){
+  if(!b || b.status==='confirmed') return;
+  CONDITIONS.forEach(c=>{
+    const auto = (c.key==='fee' && b.feeAmt && b.feeRec)
+              || (c.key==='deposit' && b.depAmt && b.depRec)
+              || (c.key==='staff' && b.staffAmt && b.staffRec);
+    if(auto) b.conditions[c.key] = true;
+  });
+}
+
+/* ================= NAV ================= */
+function activateTab(tabName){
+  if(tabName !== 'avail' && !requireAuth(tabName)) return;
+  document.querySelectorAll('nav button').forEach(b=> b.classList.toggle('active', b.dataset.tab === tabName));
+  document.querySelectorAll('main section').forEach(s=>s.hidden=true);
+  document.getElementById('tab-'+tabName).hidden=false;
+  if(tabName==='list') renderList();
+  if(tabName==='avail') renderStrip();
+  if(tabName==='settings') loadSettingsForm();
+}
+
+document.querySelectorAll('nav button').forEach(btn=>{
+  btn.onclick = () => activateTab(btn.dataset.tab);
+});
+
+/* ================= SETTINGS & LIVE PREVIEW LOGIC ================= */
+function loadSettingsForm(){
+  if(!requireAuth('settings')) return;
+  document.getElementById('setSignerName').value = ORG.signerName;
+  document.getElementById('setSignerTitles').value = ORG.signerTitles.join(', ');
+  document.getElementById('setRecipientTitle').value = ORG.recipientTitle;
+
+  document.getElementById('setTopMargin').value = ORG.layout.topMargin;
+  document.getElementById('setFontSize').value = ORG.layout.fontSize;
+  document.getElementById('setLeftMargin').value = ORG.layout.leftMargin;
+
+  updateLivePreview();
+  setTimeout(scaleLivePreview, 100);
+}
+
+function scaleLivePreview() {
+  const wrapper = document.getElementById('livePreviewWrapper');
+  const scaler = document.getElementById('livePreviewContent');
+  if(!wrapper || !scaler) return;
+  const wrapperWidth = wrapper.clientWidth;
+  const scale = wrapperWidth / (210 * 3.7795); 
+  scaler.style.transform = `scale(${scale})`;
+}
+window.addEventListener('resize', scaleLivePreview);
+
+document.querySelectorAll('.live-input').forEach(input => {
+  input.addEventListener('input', updateLivePreview);
+});
+
+document.getElementById('headImgInput').addEventListener('change', function(e) {
+  if(!requireAuth('settings')) return;
+  const file = e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = function(event) {
+    ORG.headerImg = event.target.result; 
+    updateLivePreview();
+  };
+  reader.readAsDataURL(file);
+});
+
+function removeHeaderImage(){
+  if(!requireAuth('settings')) return;
+  ORG.headerImg = '';
+  document.getElementById('headImgInput').value = '';
+  updateLivePreview();
+}
+
+function updateLivePreview() {
+  const mockBooking = bookings.length ? bookings[bookings.length - 1] : {
+    hall: 'rajaratna', date: ymd(new Date()), from: '09:00', to: '12:00', refNo: 'RPM/W/D/AD/001',
+    name: 'Sample User', phone: '0771234567', eventName: 'Sample Event', feeAmt: '1000', feeRec: '123',
+    officerName: HALLS['rajaratna'].defaultOfficer
+  };
+
+  ORG.layout = {
+    topMargin: Number(document.getElementById('setTopMargin').value) || 50,
+    fontSize: Number(document.getElementById('setFontSize').value) || 14,
+    leftMargin: Number(document.getElementById('setLeftMargin').value) || 20
+  };
+  
+  ORG.signerName = document.getElementById('setSignerName').value;
+  ORG.signerTitles = document.getElementById('setSignerTitles').value.split(',').map(s=>s.trim());
+  ORG.recipientTitle = document.getElementById('setRecipientTitle').value;
+
+  const html = buildLetter(mockBooking);
+  
+  const container = document.getElementById('livePreviewContent');
+  container.innerHTML = html;
+  
+  currentPreviewHTML = html;
+  scaleLivePreview();
+}
+
+function saveSettings(){
+  if(!requireAuth('settings')) return;
+  localStorage.setItem('orgSettings', JSON.stringify(ORG));
+  alert('✅ සැකසුම් සුරකින ලදී.');
+}
+
+/* ================= FORM ================= */
+const form = document.getElementById('bookingForm');
+
+form.hall.addEventListener('change', ()=>{
+  if(!editingId && !form.refNo.dataset.manual) form.refNo.value = suggestRef(form.hall.value);
+  form.officerName.value = HALLS[form.hall.value].defaultOfficer;
+});
+form.refNo.addEventListener('input', ()=>{ form.refNo.dataset.manual = form.refNo.value ? '1' : ''; });
+
+form.addEventListener('submit', e=>{
+  e.preventDefault();
+  if(!requireAuth('new')) return;
+  const fd = new FormData(form);
+  const data = {};
+  fd.forEach((v,k)=> data[k] = (typeof v==='string') ? v.trim() : v);
+  if(data.from >= data.to){ alert('අවසාන වේලාව ආරම්භයට පසුව විය යුතුයි.'); return; }
+
+  const clash = bookings.find(b => b.id!==editingId && b.hall===data.hall && b.date===data.date
+                   && data.from < b.to && b.from < data.to);
+  if(clash && !confirm(`⚠ දැනටමත් වෙන්කිරීමක් ඇත (${clash.name}). තවදුරටත් සුරකින්නද?`)) return;
+
+  if(editingId){
+    const b = bookings.find(x=>x.id===editingId);
+    Object.assign(b, data);
+    autoCheck(b);
+    save();
+    alert('✅ යාවත්කාලීන කරන ලදී.');
+    renderCond();
+  }else{
+    if(!data.refNo) data.refNo = suggestRef(data.hall);
+    const nb = { id: uid(), ...data, conditions:{}, status:'pending', createdAt:new Date().toISOString() };
+    autoCheck(nb);
+    bookings.push(nb);
+    save();
+    alert('✅ කෙටුම්පතක් ලෙස සුරකින ලදී.');
+    resetForm();
+    activateTab('list');
+  }
+});
+
+function resetForm(){
+  form.reset(); editingId = null;
+  delete form.refNo.dataset.manual;
+  document.getElementById('formTitle').textContent = 'නව වෙන්කිරීමක්';
+  document.getElementById('condBox').hidden = true;
+  document.getElementById('confirmBtn').hidden = true;
+  document.getElementById('reprintBtn').hidden = true;
+  document.getElementById('cancelEdit').hidden = true;
+  form.refNo.value = suggestRef(form.hall.value);
+  form.officerName.value = HALLS[form.hall.value].defaultOfficer;
+}
+document.getElementById('cancelEdit').onclick = resetForm;
+
+/* ================= CONDITIONS ================= */
+function renderCond(){
+  const b = bookings.find(x=>x.id===editingId);
+  const box = document.getElementById('condBox');
+  const list = document.getElementById('condList');
+  if(!b){ box.hidden = true; return; }
+  box.hidden = false;
+  autoCheck(b); save();
+
+  list.innerHTML = CONDITIONS.map(c=>`
+    <label class="cond">
+      <input type="checkbox" data-key="${c.key}" ${b.conditions[c.key]?'checked':''} ${b.status==='confirmed'?'disabled':''}>
+      ${c.label}
+    </label>`).join('');
+
+  list.querySelectorAll('input[type=checkbox]').forEach(cb=>{
+    cb.onchange = () => {
+      if(!requireAuth('new')){ cb.checked = !cb.checked; return; }
+      b.conditions[cb.dataset.key] = cb.checked; save(); updateConfirmBtn();
+    };
+  });
+  updateConfirmBtn();
+}
+
+function updateConfirmBtn(){
+  const b = bookings.find(x=>x.id===editingId);
+  const btn = document.getElementById('confirmBtn');
+  const rp  = document.getElementById('reprintBtn');
+  if(!b){ btn.hidden=true; rp.hidden=true; return; }
+
+  if(b.status==='confirmed'){
+    btn.hidden=true; rp.hidden=false;
+  }else{
+    const all = CONDITIONS.every(c => b.conditions[c.key]);
+    btn.hidden=false; rp.hidden=true;
+    btn.disabled = !all;
+    btn.textContent = all ? '✔ තහවුරු කරන්න' : '✔ තහවුරු කරන්න (කොන්දේසි ඉතිරියි)';
+  }
+}
+
+document.getElementById('confirmBtn').onclick = ()=>{
+  if(!requireAuth('new')) return;
+  const b = bookings.find(x=>x.id===editingId);
+  if(!b) return;
+  const missing = CONDITIONS.filter(c=>!b.conditions[c.key]);
+  if(missing.length){ alert('මුලින්ම සම්පූර්ණ කරන්න:\n• ' + missing.map(c=>c.label).join('\n• ')); return; }
+  b.status = 'confirmed';
+  b.confirmedAt = new Date().toISOString();
+  save(); renderCond(); renderList();
+  showPreview(b.id);
+};
+
+document.getElementById('reprintBtn').onclick = ()=>{ if(editingId) showPreview(editingId); };
+
+/* ================= LIST ================= */
+function renderList(){
+  if(!isAuthenticated) return;
+  const box = document.getElementById('listBox');
+  if(!bookings.length){ box.innerHTML = '<p class="hint">තවම වෙන්කිරීම් නැත.</p>'; return; }
+  const sorted = [...bookings].sort((a,b)=> (a.date+a.from).localeCompare(b.date+b.from));
+  box.innerHTML = sorted.map(b=>`
+    <div class="booking ${b.status}">
+      <div class="row">
+        <div class="title"><b>${HALLS[b.hall].label}</b> — ${fmtDateDot(b.date)} · ${b.from}–${b.to}</div>
+        <span class="badge ${b.status}">${b.status==='confirmed'?'තහවුරු':'කෙටුම්පත'}</span>
+      </div>
+      <div style="margin-top:6px;font-size:14px">
+        <b>${b.name}</b> · 📞 ${b.phone}${b.refNo?' · අංකය: '+b.refNo:''}<br>
+        <span class="hint">${b.eventName}</span>
+      </div>
+      <div style="margin-top:10px;display:flex;gap:6px;flex-wrap:wrap">
+        <button class="ghost" onclick="editBooking('${b.id}')">✏️ සංස්කරණය</button>
+        ${b.status==='confirmed'?`<button class="ghost" onclick="showPreview('${b.id}')">👁 ලිපිය බලන්න</button>`:''}
+        <button class="ghost" onclick="delBooking('${b.id}')">🗑 මකන්න</button>
+      </div>
+    </div>`).join('');
+}
+
+function editBooking(id){
+  if(!requireAuth('new')) return;
+  const b = bookings.find(x=>x.id===id);
+  if(!b) return;
+  editingId = id;
+  for(const k in b){ if(form[k] !== undefined) form[k].value = b[k] ?? ''; }
+  form.refNo.dataset.manual = '1';
+  document.getElementById('formTitle').textContent = 'සංස්කරණය — ' + HALLS[b.hall].label;
+  document.getElementById('cancelEdit').hidden = false;
+  activateTab('new');
+  renderCond();
+  window.scrollTo(0,0);
+}
+
+function delBooking(id){
+  if(!requireAuth('list')) return;
+  if(!confirm('මෙම වෙන්කිරීම මකා දැමීමට අවශ්‍යද?')) return;
+  bookings = bookings.filter(b=>b.id!==id);
+  save(); renderList();
+}
+
+/* ================= AVAILABILITY (PUBLIC) ================= */
+function hallStatus(hall, date){
+  const items = bookings.filter(b=>b.hall===hall && b.date===date);
+  if(items.some(b=>b.status==='confirmed')) return 'busy';
+  if(items.length) return 'pend';
+  return 'free';
+}
+function renderStrip(){
+  const strip = document.getElementById('strip');
+  const today = new Date(); let html='';
+  for(let i=0;i<14;i++){
+    const d = new Date(today); d.setDate(today.getDate()+i);
+    const ds = ymd(d);
+    const r = hallStatus('rajaratna',ds), m = hallStatus('mahaweli',ds);
+    html += `<div class="day" onclick="pickDay('${ds}')">
+      <div class="num">${d.getDate()}</div>
+      <div class="hint" style="font-size:10px">${MONTHS_SI[d.getMonth()].slice(0,3)}</div>
+      <div class="dots"><span class="dot ${r}">R</span><span class="dot ${m}">M</span></div>
+    </div>`;
+  }
+  strip.innerHTML = html;
+}
+function pickDay(ds){ document.getElementById('availDate').value = ds; showAvail(ds); }
+document.getElementById('availDate').onchange = e => showAvail(e.target.value);
+function showAvail(ds){
+  const box = document.getElementById('availResult');
+  if(!ds){ box.innerHTML=''; return; }
+  let html = `<h4 style="margin:0 0 10px">${fmtDateLong(ds)}</h4>`;
+  for(const h in HALLS){
+    const items = bookings.filter(b=>b.hall===h && b.date===ds).sort((a,b)=>a.from.localeCompare(b.from));
+    const st = hallStatus(h, ds);
+    const color = st==='free'?'#3fa66b':st==='pend'?'#e0a800':'#c0392b';
+    const label = st==='free'?'✅ නිදහස්':st==='pend'?'✏️ කෙටුම්පතක් ඇත':'⛔ තහවුරු කර ඇත';
+    html += `<div style="border-left:5px solid ${color};padding:10px 14px;margin-bottom:10px;background:#fafafa;border-radius:6px">
+      <b>${HALLS[h].label}</b> — <span style="color:${color}">${label}</span>
+      ${items.length ? '<div style="margin-top:6px;font-size:14px">'+items.map(b=>{
+        const stTag = b.status==='pending'?' (කෙටුම්පත)':' (තහවුරු)';
+        return isAuthenticated
+          ? `· ${b.from}–${b.to} — ${b.name} ${b.status==='pending'?'✏️':''}`
+          : `· ${b.from}–${b.to}${stTag}`;
+      }).join('<br>')+'</div>'
+        : '<div class="hint">මෙදින වෙන්කිරීම් නැත.</div>'}
+    </div>`;
+  }
+  box.innerHTML = html;
+}
+
+/* ================= LETTER BUILD ================= */
+function buildLetter(b){
+  const H = HALLS[b.hall];
+  const today = new Date();
+  const L = ORG.layout;
+
+  const receipts = [];
+  if(b.feeAmt)   receipts.push(`${b.feeAmt}/= ${b.feeRec?`(${b.feeRec})`:''} ශාලා ගාස්තු`);
+  if(b.depAmt)   receipts.push(`${b.depAmt}/= ${b.depRec?`(${b.depRec})`:''} ඇප මුදල`);
+  if(b.staffAmt) receipts.push(`${b.staffAmt}/= ${b.staffRec?`(${b.staffRec})`:''} සේවක දීමනාව`);
+  const receiptLines = receipts.length ? receipts : ['-'];
+
+  let officer = b.officerName || H.defaultOfficer || '';
+  const officerDisplay = /(මයා|මිය)\.?$/.test(officer.trim()) ? officer : officer + ' මයා';
+
+  const bgImgHTML = ORG.headerImg ? `<div class="org-head-wrap"><img src="${ORG.headerImg}" class="org-head-img"></div>` : '';
+
+  return `<div class="letter">
+    
+    ${bgImgHTML}
+
+    <div class="letter-body" style="font-size: ${L.fontSize}px; padding: ${L.topMargin}mm ${L.leftMargin}mm 20mm ${L.leftMargin}mm;">
+      
+      <div class="letter-top">
+        <div class="tl">
+          <div>මාගේ අංක: <b>${b.refNo || suggestRef(b.hall)}</b></div>
+          <div>දිනය:- ${fmtDateDot(ymd(today))}</div>
+          <div class="recipient">${ORG.recipientTitle}</div>
+        </div>
+      </div>
+
+      <div class="title" style="font-size: 1.1em;">${H.label} වෙන්කිරීම.</div>
+
+      <p>පහත සඳහන් වැඩසටහන ${fmtDateMasa(b.date)} පැවැත්වේ. එම දිනයන්ට අදාල රාජකාරී ඉටු කිරීම සඳහා විදුලි කාර්මික මහතුන් යෙදවීමට අවශ්‍ය කටයුතු සලසන මෙන් කාරුණිකව ඉල්ලා සිටිමි.</p>
+
+      <div class="bullets">
+        <div>➢ වැඩසටහන :- "${b.eventName}"</div>
+        <div>➢ වෙන්කර ඇති වෙලාව :- ${fmtDateDot(b.date)} දින ${fmtTime12(b.from)} සිට ${fmtTime12(b.to)} දක්වා</div>
+        <div>➢ වෙන්කරන ලද අය :- ${b.name}${b.address?` (${b.address})`:''}</div>
+        <div>➢ දුරකතන අංකය :- ${b.phone}</div>
+        
+        <div class="receipt-row">
+          <span class="rlabel">➢ මුදල් තැන්පත් කරන ලද රිසිටිපත් අංකය :</span>
+          <div class="rvalues">
+            ${receiptLines.map(r=>`<div>${r}</div>`).join('')}
+          </div>
+        </div>
+        
+        ${b.notes ? `<div>➢ විශේෂ සටහන :- ${b.notes}</div>` : ''}
+      </div>
+
+      <div class="sign">
+        <div class="sign-dots"></div>
+        <div class="sign-name">${ORG.signerName}</div>
+        ${ORG.signerTitles.map(t=>`<div>${t}</div>`).join('')}
+      </div>
+
+      <div class="forward">
+        <div class="fw-left">
+          <div class="fw-text">
+            <div class="fw-item">බලප්‍රදේශ භාර නිලධාරී</div>
+            <div class="fw-item">${officerDisplay}</div>
+            <div class="fw-indent">${H.label}</div>
+          </div>
+        </div>
+        <div class="fw-right">
+          <div>- ආරක්ෂක කටයුතු සඳහා</div>
+          <div>- දැ.ගැ.හා අවශ්‍ය කටයුතු සඳහා</div>
+        </div>
+      </div>
+    </div>
+  </div>`;
+}
+
+/* ================= PREVIEW + PRINT ================= */
+function showPreview(id){
+  if(!requireAuth('list')) return;
+  const b = bookings.find(x=>x.id===id);
+  if(!b){ alert('වෙන්කිරීමක් හමු නොවුණි.'); return; }
+  if(b.status!=='confirmed'){ alert('තහවුරු කළ වෙන්කිරීමක් පමණක්.'); return; }
+  
+  currentPreviewHTML = buildLetter(b);
+  document.getElementById('previewContent').innerHTML = currentPreviewHTML;
+  document.getElementById('previewModal').style.display = 'block';
+}
+function closePreview(){ document.getElementById('previewModal').style.display = 'none'; }
+
+function doPrint(){
+  if(!requireAuth('list')) return;
+  document.getElementById('printArea').innerHTML = currentPreviewHTML;
+  closePreview();
+  setTimeout(()=>{
+    try { window.print(); }
+    catch(e){ alert('මුද්‍රණය ආරම්භ කළ නොහැක.\n\nCtrl+P (Windows) හෝ Cmd+P (Mac) ඔබන්න.'); }
+  }, 250);
+}
+
+/* ================= EXPORT ================= */
+document.getElementById('exportBtn').onclick = ()=>{
+  if(!requireAuth('list')) return;
+  const blob = new Blob([JSON.stringify(bookings,null,2)],{type:'application/json'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `hall-bookings-${ymd(new Date())}.json`;
+  a.click();
+};
+
+/* ================= INIT ================= */
+updateAuthUI();
+document.getElementById('availDate').value = ymd(new Date());
+form.refNo.value = suggestRef('mahaweli');
+form.officerName.value = HALLS['mahaweli'].defaultOfficer;
+renderList(); renderStrip(); showAvail(ymd(new Date()));
+</script>
+</body>
+</html>
