@@ -760,7 +760,9 @@ function saveSettings(){
 const form = document.getElementById('bookingForm');
 
 form.hall.addEventListener('change', ()=>{
-  if(!editingId && !form.refNo.dataset.manual) form.refNo.value = suggestRef(form.hall.value);
+  if(!editingId && !form.refNo.dataset.manual){
+    form.refNo.value = suggestRef(form.hall.value);
+  }
   form.officerName.value = HALLS[form.hall.value].defaultOfficer;
 });
 form.refNo.addEventListener('input', ()=>{ form.refNo.dataset.manual = form.refNo.value ? '1' : ''; });
