@@ -266,7 +266,7 @@
     <div class="settings-panel">
       <h3>ලිපි සැකසුම් (Layout)</h3>
       <p class="hint" style="margin-bottom:16px;">ලිපි ශීර්ෂය අප්ලෝඩ් කර, පහත අගයන් මගින් ලියුමේ පිහිටීම පාලනය කරන්න.</p>
-      
+
       <div class="full" style="margin-bottom:15px;">
         <label>ලිපි ශීර්ෂ පසුතලය (Letterhead PNG/JPG)</label>
         <input type="file" id="headImgInput" accept="image/*">
@@ -284,17 +284,16 @@
       </div>
 
       <h4 style="margin:0 0 10px; color:#0b5c3f; border-top:1px solid #ddd; padding-top:15px;">අත්සන් සහ යොමු කිරීම්</h4>
-      
-      <!-- 👇 මෙන්න මෙතන තනතුරු 3 වෙන වෙනම දාන්න පුළුවන් විදියට වෙනස් කළා 👇 -->
+
       <div class="grid">
         <div class="full">
           <label>අත්සන් කරන නිලධාරියාගේ නම</label>
-          <input id="setSignerName">
+          <input id="setSignerName" class="live-input">
         </div>
-        <div class="full"><label>තනතුර 1 (උදා: නියෝජ්‍ය නේවාසික ව්‍යාපාර කළමනාකාර (පාලන))</label><input id="setSignerTitle1"></div>
-        <div class="full"><label>තනතුර 2 (උදා: නේවාසික ව්‍යාපාර කළමණාකාර (වලව) වෙනුවට)</label><input id="setSignerTitle2"></div>
-        <div class="full"><label>තනතුර 3 (උදා: වලව විශේෂ බල ප්‍රදේශය.)</label><input id="setSignerTitle3"></div>
-        <div class="full"><label>ලිපිය යොමු කරන තැනැත්තා</label><input id="setRecipientTitle"></div>
+        <div class="full"><label>තනතුර 1</label><input id="setSignerTitle1" class="live-input"></div>
+        <div class="full"><label>තනතුර 2</label><input id="setSignerTitle2" class="live-input"></div>
+        <div class="full"><label>තනතුර 3</label><input id="setSignerTitle3" class="live-input"></div>
+        <div class="full"><label>ලිපිය යොමු කරන තැනැත්තා</label><input id="setRecipientTitle" class="live-input"></div>
       </div>
 
       <button class="primary" type="button" style="margin-top:20px; width:100%;" onclick="saveSettings()">💾 සැකසුම් සුරකින්න</button>
@@ -358,7 +357,52 @@
 <div id="printArea"></div>
 
 <script>
- localStorage.removeItem('orgSettings'); 
+/* ================= DEFAULT CONFIG ================= */
+const DEFAULT_ORG = {
+  division: 'Administrative Division',
+  authority: 'Mahaweli Authority of Sri Lanka',
+  area: 'Walawa Special Area.',
+  phones: '047-2230208, 047-3489129',
+  recipientTitle: 'නියෝජ්‍ය නේවාසික ව්‍යාපාර කළමණාකාර (ඉංජිනේරු), වලව.',
+  signerName: 'චාන්දනී එස්. කොඩිකාරගේ',
+  signerTitle1: 'නියෝජ්‍ය නේවාසික ව්‍යාපාර කළමණාකාර (පාලන)',
+  signerTitle2: 'නේවාසික ව්‍යාපාර කළමණාකාර (වලව) වෙනුවට',
+  signerTitle3: 'වලව විශේෂ බල ප්‍රදේශය.',
+  headerImg: '',
+  layout: { topMargin: 50, fontSize: 14, leftMargin: 20 }
+};
+
+function normalizeOrg(rawOrg){
+  const merged = {
+    ...DEFAULT_ORG,
+    ...(rawOrg || {}),
+    layout: { ...DEFAULT_ORG.layout, ...((rawOrg && rawOrg.layout) || {}) }
+  };
+
+  if(Array.isArray(merged.signerTitles)){
+    merged.signerTitle1 = merged.signerTitle1 || merged.signerTitles[0] || DEFAULT_ORG.signerTitle1;
+    merged.signerTitle2 = merged.signerTitle2 || merged.signerTitles[1] || DEFAULT_ORG.signerTitle2;
+    merged.signerTitle3 = merged.signerTitle3 || merged.signerTitles[2] || DEFAULT_ORG.signerTitle3;
+    delete merged.signerTitles;
+  }
+
+  // පැරණි "නිවාසික" අගයන් පවතී නම් අලුත් "නියෝජ්‍ය නේවාසික / නේවාසික" අගයන්ට යාවත්කාලීන කිරීම
+  if(merged.recipientTitle === 'නිවාසික ව්‍යාපාර කළමණාකාර (ඉංජිනේරු), වලව.'){
+    merged.recipientTitle = DEFAULT_ORG.recipientTitle;
+  }
+  if(merged.signerTitle1 === 'නිවාසික ව්‍යාපාර කළමණාකාර (පාලන)'){
+    merged.signerTitle1 = DEFAULT_ORG.signerTitle1;
+  }
+  if(merged.signerTitle2 === 'නිවාසික ව්‍යාපාර කළමණාකාර (වලව) වෙනුවට'){
+    merged.signerTitle2 = DEFAULT_ORG.signerTitle2;
+  }
+
+  return merged;
+}
+
+localStorage.removeItem('orgSettings');
+let ORG = normalizeOrg(DEFAULT_ORG);
+
 /* ================= FIREBASE REALTIME DB SYNC ================= */
 const FIREBASE_DB_URL = 'https://walawa-hall-booking-default-rtdb.asia-southeast1.firebasedatabase.app';
 const DB_PATH = '/walawaHallSystem';
@@ -406,18 +450,7 @@ async function pullCloudState(silent = true){
       localStorage.setItem(KEY, JSON.stringify(bookings));
     }
     if(data.org){
-      ORG = {
-        ...DEFAULT_ORG,
-        ...data.org,
-        layout: { ...DEFAULT_ORG.layout, ...(data.org.layout || {}) }
-      };
-      // පරණ signerTitles අරේ තිබ්බොත් ඒක අලුත් ක්‍රමයට හරවන්න
-      if(data.org.signerTitles && Array.isArray(data.org.signerTitles)){
-        ORG.signerTitle1 = data.org.signerTitle1 || data.org.signerTitles[0] || DEFAULT_ORG.signerTitle1;
-        ORG.signerTitle2 = data.org.signerTitle2 || data.org.signerTitles[1] || DEFAULT_ORG.signerTitle2;
-        ORG.signerTitle3 = data.org.signerTitle3 || data.org.signerTitles[2] || DEFAULT_ORG.signerTitle3;
-        delete ORG.signerTitles;
-      }
+      ORG = normalizeOrg(data.org);
       localStorage.setItem('orgSettings', JSON.stringify(ORG));
     }
     if(data.pin){ localStorage.setItem(PIN_STORAGE_KEY, String(data.pin)); }
@@ -523,31 +556,6 @@ function updateAuthUI(){
     badge.textContent = '🔓 මහජන දසුන (දින පමණි)';
     btn.textContent = '🔑 මුරපදයෙන් ඇතුළු වන්න';
   }
-}
-
-/* ================= DEFAULT CONFIG ================= */
-const DEFAULT_ORG = {
-  division: 'Administrative Division',
-  authority: 'Mahaweli Authority of Sri Lanka',
-  area: 'Walawa Special Area.',
-  phones: '047-2230208, 047-3489129',
-  recipientTitle: 'නියෝජ්‍ය නේවාසික ව්‍යාපාර කළමණාකාර (ඉංජිනේරු), වලව.',
-  signerName: 'චාන්දනී එස්. කොඩිකාරගේ',
-  signerTitle1: 'නියෝජ්‍ය නේවාසික ව්‍යාපාර කළමනාකාර (පාලන)',
-  signerTitle2: 'නේවාසික ව්‍යාපාර කළමණාකාර (වලව) වෙනුවට',
-  signerTitle3: 'වලව විශේෂ බල ප්‍රදේශය.',
-  headerImg: '',
-  layout: { topMargin: 50, fontSize: 14, leftMargin: 20 }
-};
-
-let ORG = JSON.parse(localStorage.getItem('orgSettings')) || DEFAULT_ORG;
-if(!ORG.layout) ORG.layout = DEFAULT_ORG.layout;
-// පරණ දත්ත තියෙනවා නම් ඒක අලුත් තනතුරු 3ට හරවන්න
-if(ORG.signerTitles && Array.isArray(ORG.signerTitles)){
-  ORG.signerTitle1 = ORG.signerTitles[0] || DEFAULT_ORG.signerTitle1;
-  ORG.signerTitle2 = ORG.signerTitles[1] || DEFAULT_ORG.signerTitle2;
-  ORG.signerTitle3 = ORG.signerTitles[2] || DEFAULT_ORG.signerTitle3;
-  delete ORG.signerTitles;
 }
 
 const HALLS = {
@@ -678,7 +686,7 @@ function updateLivePreview() {
     fontSize: Number(document.getElementById('setFontSize').value) || 14,
     leftMargin: Number(document.getElementById('setLeftMargin').value) || 20
   };
-  
+
   ORG.signerName = document.getElementById('setSignerName').value;
   ORG.signerTitle1 = document.getElementById('setSignerTitle1').value;
   ORG.signerTitle2 = document.getElementById('setSignerTitle2').value;
@@ -932,7 +940,6 @@ function buildLetter(b){
 
   const bgImgHTML = ORG.headerImg ? `<div class="org-head-wrap"><img src="${ORG.headerImg}" class="org-head-img"></div>` : '';
 
-  // තනතුරු 3 වෙන වෙනම වෙන වෙනම පේළි වලට යවනවා
   const titlesHTML = [ORG.signerTitle1, ORG.signerTitle2, ORG.signerTitle3].filter(Boolean).map(t => `<div>${t}</div>`).join('');
 
   return `<div class="letter">
