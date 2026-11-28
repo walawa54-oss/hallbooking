@@ -104,10 +104,7 @@
     body > *:not(#printArea) { display: none !important; }
     #printArea { display: block !important; }
 
-    @page {
-      size: A4;
-      margin: 0;
-    }
+    @page { size: A4; margin: 0; }
     body { background: #fff; margin: 0; padding: 0; }
   }
 
@@ -123,34 +120,15 @@
     flex-direction: column;
   }
 
-  .org-head-wrap {
-    width: 100%;
-    padding: 15mm 15mm 0 15mm;
-  }
-  .org-head-img {
-    width: 100%;
-    height: auto;
-    display: block;
-    margin-bottom: 5mm;
-  }
-
-  .letter-body {
-    flex: 1;
-  }
+  .org-head-wrap { width: 100%; padding: 15mm 15mm 0 15mm; }
+  .org-head-img { width: 100%; height: auto; display: block; margin-bottom: 5mm; }
+  .letter-body { flex: 1; }
 
   .letter-top{display:flex;flex-direction:column;margin-bottom:14px}
   .letter-top .tl{line-height:1.5}
   .letter-top .recipient{margin-top:10px}
 
-  .title{
-    text-align: left;
-    font-weight: 700;
-    margin: 20px 0 15px;
-    border-bottom: 1.5px solid #000;
-    padding-bottom: 3px;
-    display: inline-block;
-  }
-
+  .title{ text-align: left; font-weight: 700; margin: 20px 0 15px; border-bottom: 1.5px solid #000; padding-bottom: 3px; display: inline-block;}
   .letter p{margin:8px 0;text-align:justify}
   .bullets>div{margin:4px 0}
 
@@ -158,19 +136,9 @@
   .receipt-row .rlabel { white-space: nowrap; margin-right: 5px; }
   .receipt-row .rvalues > div { margin-bottom: 2px; }
 
-  .sign{
-    text-align:left;
-    margin-top:40px;
-    padding-left:20px;
-    line-height:1.5;
-  }
-  .sign .sign-dots {
-    border-top: 1.5px dotted #000;
-    width: 180px;
-    margin-bottom: 5px;
-  }
+  .sign{ text-align:left; margin-top:40px; padding-left:20px; line-height:1.5; }
+  .sign .sign-dots { border-top: 1.5px dotted #000; width: 180px; margin-bottom: 5px; }
   .sign .sign-name{font-weight:600}
-  .sign .sign-indent { padding-left: 0px; }
 
   .forward{display:flex; justify-content:flex-start; align-items:flex-start; margin-top:40px; padding-left:20px; gap:150px;}
   .forward .fw-left{display:block}
@@ -295,11 +263,10 @@
 
 <section id="tab-settings" hidden>
   <div class="settings-grid">
-
     <div class="settings-panel">
       <h3>ලිපි සැකසුම් (Layout)</h3>
       <p class="hint" style="margin-bottom:16px;">ලිපි ශීර්ෂය අප්ලෝඩ් කර, පහත අගයන් මගින් ලියුමේ පිහිටීම පාලනය කරන්න.</p>
-
+      
       <div class="full" style="margin-bottom:15px;">
         <label>ලිපි ශීර්ෂ පසුතලය (Letterhead PNG/JPG)</label>
         <input type="file" id="headImgInput" accept="image/*">
@@ -336,16 +303,13 @@
     <div class="live-preview-panel">
       <div style="width:100%; max-width: 600px;">
         <h4 style="margin:0 0 15px; text-align:center; color:#fff; text-shadow: 1px 1px 2px #000;">සජීවී පෙරදසුන (A4 Preview)</h4>
-
         <div style="display:flex; justify-content:center;">
           <div class="live-preview-container-wrapper" id="livePreviewWrapper">
             <div class="live-preview-scaler" id="livePreviewContent"></div>
           </div>
         </div>
-
       </div>
     </div>
-
   </div>
 </section>
 </main>
@@ -412,11 +376,7 @@ async function pushCloudState(){
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload)
     });
-    if(res.ok){
-      setSyncBadge('☁️ Synced');
-    }else{
-      setSyncBadge('⚠️ Sync Error');
-    }
+    if(res.ok){ setSyncBadge('☁️ Synced'); }else{ setSyncBadge('⚠️ Sync Error'); }
   }catch(err){
     console.warn('Cloud push error:', err);
     setSyncBadge('⚠️ Offline');
@@ -428,22 +388,13 @@ async function pullCloudState(silent = true){
   if(!silent) setSyncBadge('🔄 Syncing...');
   try{
     const res = await fetch(`${FIREBASE_DB_URL}${DB_PATH}.json?t=${Date.now()}`, { cache: 'no-store' });
-    if(!res.ok){
-      setSyncBadge('⚠️ Sync Error');
-      return;
-    }
+    if(!res.ok){ setSyncBadge('⚠️ Sync Error'); return; }
     const data = await res.json();
-    if(!data){
-      setSyncBadge('☁️ Connected');
-      return;
-    }
+    if(!data){ setSyncBadge('☁️ Connected'); return; }
 
     isSyncingFromCloud = true;
     if(Array.isArray(data.bookings)){
-      bookings = data.bookings.map(item => ({
-        ...item,
-        conditions: item.conditions || {}
-      }));
+      bookings = data.bookings.map(item => ({ ...item, conditions: item.conditions || {} }));
       localStorage.setItem(KEY, JSON.stringify(bookings));
     }
     if(data.org){
@@ -455,23 +406,16 @@ async function pullCloudState(silent = true){
       };
       localStorage.setItem('orgSettings', JSON.stringify(ORG));
     }
-    if(data.pin){
-      localStorage.setItem(PIN_STORAGE_KEY, String(data.pin));
-    }
+    if(data.pin){ localStorage.setItem(PIN_STORAGE_KEY, String(data.pin)); }
     isSyncingFromCloud = false;
 
-    if(!document.getElementById('tab-list').hidden){
-      renderList();
-    }
+    if(!document.getElementById('tab-list').hidden) renderList();
     if(!document.getElementById('tab-avail').hidden){
       renderStrip();
       showAvail(document.getElementById('availDate').value || ymd(new Date()));
     }
-    if(!document.getElementById('tab-settings').hidden){
-      loadSettingsForm();
-    }
+    if(!document.getElementById('tab-settings').hidden) loadSettingsForm();
     setSyncBadge('☁️ Synced');
-    if(!silent) alert('🔄 Cloud දත්ත යාවත්කාලීන කරන ලදී.');
   }catch(err){
     isSyncingFromCloud = false;
     console.warn('Cloud pull error:', err);
@@ -482,10 +426,7 @@ async function pullCloudState(silent = true){
 /* ================= AUTH CONFIG ================= */
 const PIN_STORAGE_KEY = 'hallSystemPin_v1';
 const DEFAULT_PIN = '1234';
-
-function getStoredPin(){
-  return localStorage.getItem(PIN_STORAGE_KEY) || DEFAULT_PIN;
-}
+function getStoredPin(){ return localStorage.getItem(PIN_STORAGE_KEY) || DEFAULT_PIN; }
 
 const AUTH_SESSION_KEY = 'hallSystemAuth_v1';
 let isAuthenticated = sessionStorage.getItem(AUTH_SESSION_KEY) === '1';
@@ -542,16 +483,8 @@ function changeSystemPin(){
   if(!requireAuth('settings')) return;
   const newPin = document.getElementById('newPinInput').value.trim();
   const confirmPin = document.getElementById('confirmPinInput').value.trim();
-
-  if(!newPin){
-    alert('කරුණාකර නව මුරපදයක් ඇතුළත් කරන්න.');
-    return;
-  }
-  if(newPin !== confirmPin){
-    alert('ඇතුළත් කළ මුරපද දෙක එකිනෙකට නොගැලපේ!');
-    return;
-  }
-
+  if(!newPin){ alert('කරුණාකර නව මුරපදයක් ඇතුළත් කරන්න.'); return; }
+  if(newPin !== confirmPin){ alert('ඇතුළත් කළ මුරපද දෙක එකිනෙකට නොගැලපේ!'); return; }
   localStorage.setItem(PIN_STORAGE_KEY, newPin);
   pushCloudState();
   document.getElementById('newPinInput').value = '';
@@ -564,15 +497,10 @@ function updateAuthUI(){
   const btn = document.getElementById('authActionBtn');
   document.querySelectorAll('nav button').forEach(b=>{
     const tab = b.dataset.tab;
-    if(tab === 'avail'){
-      b.textContent = '📅 දින ලබා ගැනීම';
-    }else if(tab === 'new'){
-      b.textContent = (isAuthenticated ? '' : '🔒 ') + '➕ නව වෙන්කිරීම';
-    }else if(tab === 'list'){
-      b.textContent = (isAuthenticated ? '' : '🔒 ') + '📋 වෙන්කිරීම්';
-    }else if(tab === 'settings'){
-      b.textContent = (isAuthenticated ? '' : '🔒 ') + '⚙️ ලිපි සැකසුම් (Layout)';
-    }
+    if(tab === 'avail') b.textContent = '📅 දින ලබා ගැනීම';
+    else if(tab === 'new') b.textContent = (isAuthenticated ? '' : '🔒 ') + '➕ නව වෙන්කිරීම';
+    else if(tab === 'list') b.textContent = (isAuthenticated ? '' : '🔒 ') + '📋 වෙන්කිරීම්';
+    else if(tab === 'settings') b.textContent = (isAuthenticated ? '' : '🔒 ') + '⚙️ ලිපි සැකසුම් (Layout)';
   });
   if(isAuthenticated){
     badge.textContent = '🔐 පරිපාලක ප්‍රවේශය (Unlocked)';
@@ -589,9 +517,10 @@ const DEFAULT_ORG = {
   authority: 'Mahaweli Authority of Sri Lanka',
   area: 'Walawa Special Area.',
   phones: '047-2230208, 047-3489129',
+  // 👇 මෙන්න මෙතන අකුරු හරිගැස්සුවා 👇
   recipientTitle: 'නියෝජ්‍ය නේවාසික ව්‍යාපාර කළමණාකාර (ඉංජිනේරු), වලව.',
   signerName: 'චාන්දනී එස්. කොඩිකාරගේ',
-  signerTitles: ['නියෝජ්‍ය නේවාසික ව්‍යාපාර කළමණාකාර (පාලන)', 'නේවාසික ව්‍යාපාර කළමණාකාර (වලව) වෙනුවට', 'වලව විශේෂ බල ප්‍රදේශය.'],
+  signerTitles: ['නියෝජ්‍ය නේවාසික ව්‍යාපාර කළමනාකාර (පාලන)', 'නේවාසික ව්‍යාපාර කළමණාකාර (වලව) වෙනුවට', 'වලව විශේෂ බල ප්‍රදේශය.'],
   headerImg: '',
   layout: { topMargin: 50, fontSize: 14, leftMargin: 20 }
 };
@@ -642,9 +571,6 @@ function fmtTime12(t){
 }
 
 function suggestRef(hall){
-  const prefix = HALLS[hall].refPrefix;
-  const nums = bookings.filter(b=>b.hall===hall && b.refNo && b.refNo.startsWith(prefix))
-    .map(b=>{ const m=b.refNo.match(/(\d+)(?:-|$)/); return m?+m[1]:0; });
   return HALLS[hall].refPrefix;
 }
 
@@ -724,21 +650,22 @@ function removeHeaderImage(){
 }
 
 function updateLivePreview() {
-  const mockBooking = bookings.length ? bookings[bookings.length - 1] : {
-    hall: 'rajaratna', date: ymd(new Date()), from: '09:00', to: '12:00', refNo: 'RPM/W/D/AD/001',
-    name: 'Sample User', phone: '0771234567', eventName: 'Sample Event', feeAmt: '1000', feeRec: '123',
-    officerName: HALLS['rajaratna'].defaultOfficer
-  };
-
+  // 👇 මෙතන තමයි Font Size එකයි අනිත් ඒවායි හරියටම අල්ලගන්නේ 👇
   ORG.layout = {
     topMargin: Number(document.getElementById('setTopMargin').value) || 50,
     fontSize: Number(document.getElementById('setFontSize').value) || 14,
     leftMargin: Number(document.getElementById('setLeftMargin').value) || 20
   };
-
+  
   ORG.signerName = document.getElementById('setSignerName').value;
   ORG.signerTitles = document.getElementById('setSignerTitles').value.split(',').map(s=>s.trim()).filter(Boolean);
   ORG.recipientTitle = document.getElementById('setRecipientTitle').value;
+
+  const mockBooking = bookings.length ? bookings[bookings.length - 1] : {
+    hall: 'rajaratna', date: ymd(new Date()), from: '09:00', to: '12:00', refNo: 'RPM/W/D/AD/001',
+    name: 'Sample User', phone: '0771234567', eventName: 'Sample Event', feeAmt: '1000', feeRec: '123',
+    officerName: HALLS['rajaratna'].defaultOfficer
+  };
 
   const html = buildLetter(mockBooking);
 
@@ -917,7 +844,7 @@ function delBooking(id){
   renderList();
 }
 
-/* ================= AVAILABILITY (PUBLIC) ================= */
+/* ================= AVAILABILITY ================= */
 function hallStatus(hall, date){
   const items = bookings.filter(b=>b.hall===hall && b.date===date);
   if(items.some(b=>b.status==='confirmed')) return 'busy';
