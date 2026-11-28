@@ -284,9 +284,16 @@
       </div>
 
       <h4 style="margin:0 0 10px; color:#0b5c3f; border-top:1px solid #ddd; padding-top:15px;">අත්සන් සහ යොමු කිරීම්</h4>
+      
+      <!-- 👇 මෙන්න මෙතන තනතුරු 3 වෙන වෙනම දාන්න පුළුවන් විදියට වෙනස් කළා 👇 -->
       <div class="grid">
-        <div><label>අත්සන් කරන නිලධාරියාගේ නම</label><input id="setSignerName"></div>
-        <div><label>අත්සන් කරන තනතුරු (කොමාවකින්)</label><input id="setSignerTitles"></div>
+        <div class="full">
+          <label>අත්සන් කරන නිලධාරියාගේ නම</label>
+          <input id="setSignerName">
+        </div>
+        <div class="full"><label>තනතුර 1 (උදා: නියෝජ්‍ය නේවාසික ව්‍යාපාර කළමනාකාර (පාලන))</label><input id="setSignerTitle1"></div>
+        <div class="full"><label>තනතුර 2 (උදා: නේවාසික ව්‍යාපාර කළමණාකාර (වලව) වෙනුවට)</label><input id="setSignerTitle2"></div>
+        <div class="full"><label>තනතුර 3 (උදා: වලව විශේෂ බල ප්‍රදේශය.)</label><input id="setSignerTitle3"></div>
         <div class="full"><label>ලිපිය යොමු කරන තැනැත්තා</label><input id="setRecipientTitle"></div>
       </div>
 
@@ -401,9 +408,15 @@ async function pullCloudState(silent = true){
       ORG = {
         ...DEFAULT_ORG,
         ...data.org,
-        signerTitles: Array.isArray(data.org.signerTitles) && data.org.signerTitles.length ? data.org.signerTitles : DEFAULT_ORG.signerTitles,
         layout: { ...DEFAULT_ORG.layout, ...(data.org.layout || {}) }
       };
+      // පරණ signerTitles අරේ තිබ්බොත් ඒක අලුත් ක්‍රමයට හරවන්න
+      if(data.org.signerTitles && Array.isArray(data.org.signerTitles)){
+        ORG.signerTitle1 = data.org.signerTitle1 || data.org.signerTitles[0] || DEFAULT_ORG.signerTitle1;
+        ORG.signerTitle2 = data.org.signerTitle2 || data.org.signerTitles[1] || DEFAULT_ORG.signerTitle2;
+        ORG.signerTitle3 = data.org.signerTitle3 || data.org.signerTitles[2] || DEFAULT_ORG.signerTitle3;
+        delete ORG.signerTitles;
+      }
       localStorage.setItem('orgSettings', JSON.stringify(ORG));
     }
     if(data.pin){ localStorage.setItem(PIN_STORAGE_KEY, String(data.pin)); }
@@ -517,17 +530,24 @@ const DEFAULT_ORG = {
   authority: 'Mahaweli Authority of Sri Lanka',
   area: 'Walawa Special Area.',
   phones: '047-2230208, 047-3489129',
-  // 👇 මෙන්න මෙතන අකුරු හරිගැස්සුවා 👇
   recipientTitle: 'නියෝජ්‍ය නේවාසික ව්‍යාපාර කළමණාකාර (ඉංජිනේරු), වලව.',
   signerName: 'චාන්දනී එස්. කොඩිකාරගේ',
-  signerTitles: ['නියෝජ්‍ය නේවාසික ව්‍යාපාර කළමනාකාර (පාලන)', 'නේවාසික ව්‍යාපාර කළමණාකාර (වලව) වෙනුවට', 'වලව විශේෂ බල ප්‍රදේශය.'],
+  signerTitle1: 'නියෝජ්‍ය නේවාසික ව්‍යාපාර කළමනාකාර (පාලන)',
+  signerTitle2: 'නේවාසික ව්‍යාපාර කළමණාකාර (වලව) වෙනුවට',
+  signerTitle3: 'වලව විශේෂ බල ප්‍රදේශය.',
   headerImg: '',
   layout: { topMargin: 50, fontSize: 14, leftMargin: 20 }
 };
 
 let ORG = JSON.parse(localStorage.getItem('orgSettings')) || DEFAULT_ORG;
-if(!ORG.signerTitles || ORG.signerTitles.length < 3) ORG.signerTitles = DEFAULT_ORG.signerTitles;
 if(!ORG.layout) ORG.layout = DEFAULT_ORG.layout;
+// පරණ දත්ත තියෙනවා නම් ඒක අලුත් තනතුරු 3ට හරවන්න
+if(ORG.signerTitles && Array.isArray(ORG.signerTitles)){
+  ORG.signerTitle1 = ORG.signerTitles[0] || DEFAULT_ORG.signerTitle1;
+  ORG.signerTitle2 = ORG.signerTitles[1] || DEFAULT_ORG.signerTitle2;
+  ORG.signerTitle3 = ORG.signerTitles[2] || DEFAULT_ORG.signerTitle3;
+  delete ORG.signerTitles;
+}
 
 const HALLS = {
   mahaweli : { label:'මහවැලි ශ්‍රවණාගාරය', refPrefix:'RPM/W/A365/ශ්‍රවනාගාරය', defaultOfficer: 'පී.වී.ජී. ලීලාරත්න' },
@@ -605,7 +625,9 @@ document.querySelectorAll('nav button').forEach(btn=>{
 function loadSettingsForm(){
   if(!requireAuth('settings')) return;
   document.getElementById('setSignerName').value = ORG.signerName;
-  document.getElementById('setSignerTitles').value = ORG.signerTitles.join(', ');
+  document.getElementById('setSignerTitle1').value = ORG.signerTitle1 || '';
+  document.getElementById('setSignerTitle2').value = ORG.signerTitle2 || '';
+  document.getElementById('setSignerTitle3').value = ORG.signerTitle3 || '';
   document.getElementById('setRecipientTitle').value = ORG.recipientTitle;
 
   document.getElementById('setTopMargin').value = ORG.layout.topMargin;
@@ -650,7 +672,6 @@ function removeHeaderImage(){
 }
 
 function updateLivePreview() {
-  // 👇 මෙතන තමයි Font Size එකයි අනිත් ඒවායි හරියටම අල්ලගන්නේ 👇
   ORG.layout = {
     topMargin: Number(document.getElementById('setTopMargin').value) || 50,
     fontSize: Number(document.getElementById('setFontSize').value) || 14,
@@ -658,7 +679,9 @@ function updateLivePreview() {
   };
   
   ORG.signerName = document.getElementById('setSignerName').value;
-  ORG.signerTitles = document.getElementById('setSignerTitles').value.split(',').map(s=>s.trim()).filter(Boolean);
+  ORG.signerTitle1 = document.getElementById('setSignerTitle1').value;
+  ORG.signerTitle2 = document.getElementById('setSignerTitle2').value;
+  ORG.signerTitle3 = document.getElementById('setSignerTitle3').value;
   ORG.recipientTitle = document.getElementById('setRecipientTitle').value;
 
   const mockBooking = bookings.length ? bookings[bookings.length - 1] : {
@@ -908,6 +931,9 @@ function buildLetter(b){
 
   const bgImgHTML = ORG.headerImg ? `<div class="org-head-wrap"><img src="${ORG.headerImg}" class="org-head-img"></div>` : '';
 
+  // තනතුරු 3 වෙන වෙනම වෙන වෙනම පේළි වලට යවනවා
+  const titlesHTML = [ORG.signerTitle1, ORG.signerTitle2, ORG.signerTitle3].filter(Boolean).map(t => `<div>${t}</div>`).join('');
+
   return `<div class="letter">
 
     ${bgImgHTML}
@@ -945,7 +971,7 @@ function buildLetter(b){
       <div class="sign">
         <div class="sign-dots"></div>
         <div class="sign-name">${ORG.signerName}</div>
-        ${ORG.signerTitles.map(t=>`<div>${t}</div>`).join('')}
+        ${titlesHTML}
       </div>
 
       <div class="forward">
